@@ -10,3 +10,44 @@ Deve ser armazenado somentos os números do CPF. Não podemos cadastrar 2 usuár
 O numero da agência é fixo: "0001". O usuário pode ter mais de uma conta, mas a conta pertence somente a um usuário'''
 '''Dica: Para vincular um usuário a uma conta, filtre a lista de usuários buscando o número do CPF informado para cada usuário da lista'''
 
+import os
+os.system("cls")
+def cadastro_cliente():
+    cpf = input("Insira seu CPF: ").replace(".","").replace("-","")
+    checar_cpf(cpf)
+
+def criacao_cliente(nome_criacao, cpf_criacao):
+    global clientes
+    clientes.append(nome_criacao)
+    clientes.append(cpf_criacao)
+    criacao_conta()
+    
+
+def checar_cpf(cpf_cliente):
+    global clientes
+    for x in clientes:
+        if x == cpf_cliente:
+            print("CPF em uso, utilize outro CPF ")
+            cadastro_cliente()
+    else:
+        nome = input("Insira seu nome ")
+        criacao_cliente(nome, cpf_cliente)
+
+def criacao_conta():
+    global conta
+    contador = 1
+    while conta[-1] > contador:
+    # conta[-1] = contador
+        contador +=1
+    conta.append(contador)
+    # conta.remove(0)
+
+
+clientes = []
+conta = [0]
+
+cadastro_cliente()
+print(conta)
+cadastro_cliente()
+print (clientes)
+print (conta)
