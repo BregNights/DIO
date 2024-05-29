@@ -1,8 +1,8 @@
 '''Função: Sacar, Depositar e Extrato'''
 '''Novas funçoes: Criar usuário e Criar conta corrente(vinculada ao usuário)'''
-'''Função de saque: Argumento keyword only(**). Sugestão de argumentos: saldo, valor, extrato, limite, numero_saques, limite_saques. Sugestão de retorno saldo e extrato'''
-'''Função de depósito: Argumento positional only(*). Sugestão de argumentos: saldo, valor e extrato. Sugestão de retorno saldo e extrato'''
-'''Função extrato: Argumento posicional only e keworld only (*/**). Argumento posicional: saldo. Argumentos nomeado: extrato'''
+'''Função de saque: Argumento keyword only(*). Sugestão de argumentos: saldo, valor, extrato, limite, numero_saques, limite_saques. Sugestão de retorno saldo e extrato'''
+'''Função de depósito: Argumento positional only(/). Sugestão de argumentos: saldo, valor e extrato. Sugestão de retorno saldo e extrato'''
+'''Função extrato: Argumento posicional e keyworld (/,*). Argumento posicional: saldo. Argumentos nomeado: extrato'''
 '''Opcional: Criar função listar contas ou listar usuários'''
 '''Usuário: Nome, Data de nascimento, CPF e Endereço. O endereço é uma string com o seguinte formato: endereço, numero - bairro - cidade/sigla estado.
 Deve ser armazenado somentos os números do CPF. Não podemos cadastrar 2 usuários com o mesmo CPF'''
@@ -13,38 +13,56 @@ O numero da agência é fixo: "0001". O usuário pode ter mais de uma conta, mas
 from os import system
 from time import sleep
 
-system("cls")
-
-def cadastro_cliente():
+def criar_usuario(usuario):
     cpf = input("Insira seu CPF: ").replace(".","").replace("-","")
-    filtrar_cpf(cpf)
-
-def criacao_cliente(nome_criacao, cpf_criacao):
-    clientes.append(nome_criacao)
-    clientes.append(cpf_criacao)
     
+    cliente = filtrar_cpf(cpf, usuario)
+    if cliente:
+        print("CPF já existente em nosso banco de dados!")
+        return
+    
+    nome = input("Insira seu nome: ")
+    data_nascimento = input("Insira sua data de nascimento (dd-mm-aaaa): ")
+    endereco = input("Insira seu endereço (endereço, numero - bairro - cidade/sigla estado): ")
 
-def filtrar_cpf(cpf_cliente):
-    global clientes
-    for cpf in clientes:
-        if cpf == cpf_cliente:
-            print("CPF em uso, utilize outro CPF ")
-            cadastro_cliente()
-    else:
-        nome = input("Insira seu nome ")
-        criacao_cliente(nome, cpf_cliente)
+    usuario.append({"nome":nome, "cpf":cpf, "data_nascimento":data_nascimento, "endereco":endereco})
 
-# def criacao_conta():
-#     global conta
-#     contador = 1
-#     while conta[-1] > contador:
-#     # conta[-1] = contador
-#         contador +=1
-#     conta.append(contador)
-#     # conta.remove(0)
+    print("Cliente cadastrado...")
 
+def filtrar_cpf(cpf, clientes):
+    cpf_filtrado = [usuario for usuario in clientes if usuario["cpf"] == cpf]
+    return cpf_filtrado[0] if cpf_filtrado else None
 
-def depositar(saldo, deposito, extrato): #ok
+def listar_usuarios(clientes):
+    for cliente in clientes:
+        mostrar = f'''
+        Nome:{cliente['nome']}
+        CPF:{cliente['cpf']}
+        Nascimento:{cliente['data_nascimento']}
+        Endereço:{cliente['endereco']}
+        '''
+        print(mostrar)
+
+def criar_conta(agencia, numero_conta, usuario):
+    cpf = input("Insira seu CPF: ")
+    usuario = filtrar_cpf(cpf, usuario)
+
+    if usuario:
+        print("Conta criada...")
+        return {"agencia":agencia, "numero_conta":numero_conta, "usuario":usuario}
+    
+    print("Cliente não encontrado no banco de dados")
+
+def listar_contas(contas):
+    for conta in contas:
+        mostrar = f'''
+        Agência:{conta['agencia']}
+        Conta:{conta['numero_conta']}
+        Titular:{conta['usuario']['nome']}
+        '''
+        print(mostrar)
+
+def depositar(saldo, deposito, extrato, /):
     if deposito > 0:
         saldo += deposito
         extrato += f"Depósito R${deposito:.2f}\n"
@@ -56,7 +74,7 @@ def depositar(saldo, deposito, extrato): #ok
         print("\nValor inválido")
         sleep(2)
     
-def sacar(saldo, saque, extrato, LIMITE_VALOR_SAQUE, quantidade_saque, LIMITE_SAQUE): #ok
+def sacar(*, saldo, saque, extrato, LIMITE_VALOR_SAQUE, quantidade_saque, LIMITE_SAQUE):
         saque_excedido = saque > saldo #Verifica se tem saldo para o saque
         saque_limite = saque > LIMITE_VALOR_SAQUE #Verifica se o saque não ultrapassa o limite de valor por saque
         limite_quantidade_saque = LIMITE_SAQUE == quantidade_saque #verifica se a qunatidade de saque é igual ao limite de saque
@@ -86,7 +104,7 @@ def sacar(saldo, saque, extrato, LIMITE_VALOR_SAQUE, quantidade_saque, LIMITE_SA
 
         return saldo, extrato
 
-def exibir_extrato(saldo, extrato):#ok
+def exibir_extrato(saldo, /, *, extrato):
     print(f"Valor em conta R${saldo:.2f}\n")
     if not extrato:
         print("Nenhum depósito ou saque")
@@ -96,14 +114,14 @@ def exibir_extrato(saldo, extrato):#ok
         print(extrato)
         sleep(3)
 
-def menu(): #ok
+def menu():
     menu = '''
     Selecione uma operação para continuar
     [1] Depósito
     [2] Saque
     [3] Extrato
     [4] Nova Conta
-    [5] Contas Ativas
+    [5] Listar Contas
     [6] Novo Usuário
     [7] Listar Usuários
     [0] Finalizar operações ou sair
@@ -119,6 +137,8 @@ def main ():
     saldo = 0
     extrato = ""
     quantidade_saque = 0
+    clientes = []
+    contas = []
 
     print(f'''
       Bem vindo ao Banco {nome_banco}''')
@@ -126,14 +146,14 @@ def main ():
     while True:
 
         operacao = menu()
-
-        if operacao == 1:
+        system("cls")
+        if operacao == 1: # Depósito
             print("Você escolheu a operação de Depósito")
             deposito = float(input("Digite o valor do depósito R$"))
 
             saldo, extrato = depositar(saldo, deposito, extrato)
 
-        elif operacao == 2:
+        elif operacao == 2: # Saque
             print("Você escolheu a operação Saque")
             saque = float(input("Digite o valor do saque R$"))
 
@@ -146,24 +166,29 @@ def main ():
                 LIMITE_SAQUE=LIMITE_SAQUE,
             )
         
-        elif operacao == 3:
+        elif operacao == 3: # Extrato
             print("Você escolheu a operação Extrato\n")
 
-            exibir_extrato(saldo, extrato)
+            exibir_extrato(saldo, extrato=extrato)
 
-        elif operacao == 4:
-            pass
+        elif operacao == 4: # Nova Conta
+            numero_conta = len(contas) +1
+            conta = criar_conta(AGENCIA, numero_conta, clientes)
 
-        elif operacao == 5:
-            pass
+            if conta:
 
-        elif operacao == 6:
-            pass
+                contas.append(conta)
 
-        elif operacao == 7:
-            pass
+        elif operacao == 5: # Listar Contas
+            listar_contas(contas)
 
-        elif operacao == 0:
+        elif operacao == 6: # Novo Usuário
+            criar_usuario(clientes)
+
+        elif operacao == 7: # Listar Usuários
+            listar_usuarios(clientes)
+
+        elif operacao == 0: # Finalizar operações ou sair
             print(f"\nFinalizando operações, o banco {nome_banco} agradece, tenha um ótimo dia")
             sleep(2)
             break
